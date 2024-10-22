@@ -1,0 +1,130 @@
+---
+title: "Chess Project"
+output: html_document
+date: "2024-10-20"
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r functions, include=FALSE}
+square_to_pos <- function(square) {
+  # Calculate the x and y positions
+  x <- (square %% 8) + 1
+  y <- (square %/% 8) + 1
+  return(c(x, y))
+}
+```
+
+## Common Moves
+
+```{r moves, echo=FALSE}
+#selectInput("player", "Select Player(s):", 
+#              choices = c("white", "black", "both"), 
+#              selected = "both", multiple = TRUE)
+
+moves <- read.csv("UseableCSV/move_count.csv")
+
+moves <- moves %>%
+  rowwise() %>%
+  mutate(pos = list(square_to_pos(square))) %>%
+  unnest_wider(pos, names_sep = "_") %>%
+  rename(x = pos_1, y = pos_2)
+
+renderPlot({
+  ggplot(moves, aes(x = x, y = y, fill=count)) +
+    geom_tile() +
+    facet_wrap(~player)
+})
+```
+
+## Common Captures
+
+```{r captures, echo=FALSE}
+captures <- read.csv("UseableCSV/captures.csv")
+
+inputPanel(
+  selectInput("cap_player", label = "Player:",
+              choices = c("white", "black"), selected = "white"),
+  
+  selectInput("piece", label = "Capturing Piece:",
+              choices = c('pawn', 'rook', 'bishop', 'knight', 'queen', 'king'), selected = "pawn")
+)
+
+renderPlot({
+  filtered_data <- captures %>%
+      filter(player == input$cap_player & piece_moved == input$piece)
+    
+  ggplot(filtered_data, aes(x = piece_taken, y = count)) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(x = "Piece Taken", y = "Count", title = paste(input$player, input$piece, "captures")) +
+    theme_minimal()
+})
+```
+
+## Check Moves
+This is whenever there is a check and what piece was moved that made a check.
+
+```{r checks, echo=FALSE}
+# Get Data
+checks <- read.csv("UseableCSV/check_squares.csv")
+
+# - Get king square
+checks <- checks %>%
+  rowwise() %>%
+  mutate(pos = list(square_to_pos(square))) %>%
+  unnest_wider(pos, names_sep = "_") %>%
+  rename(x = pos_1, y = pos_2)
+
+# - Get check from square
+checks <- checks %>%
+  rowwise() %>%
+  mutate(pos = list(square_to_pos(moved_from))) %>%
+  unnest_wider(pos, names_sep = "_") %>%
+  rename(check_x = pos_1, check_y = pos_2)
+
+
+# Input
+inputPanel(
+  # Player
+  selectInput("check_player", label = "Player:",
+              choices = c("white", "black", "both"), selected = "both"),
+  
+  # x (row)
+  selectInput("x_coord", "Select X (Row):", choices = 1:8),
+  
+  # y (column)
+  selectInput("y_coord", "Select Y (Col):", choices = 1:8)
+)
+
+renderPlot({
+  # Get King at x, y
+  filtered_data <- checks %>%
+    filter((input$check_player == "both" | player == input$check_player) & 
+             x == input$x_coord &
+             y == input$y_coord)
+  
+  # Color King square
+  '
+  filtered_data <- filtered_data %>%
+    mutate(tile_color = ifelse(x == input$x_coord & y == input$y_coord,
+                               "blue",
+                               "lightgray"))
+  '
+  
+  ggplot(filtered_data, aes(x = check_x, y = check_y, fill=count)) +
+    geom_tile() +
+    coord_fixed() +
+    labs(title = paste("Check with King at", input$x_coord, ",", input$y_coord)) +
+    theme_minimal()
+  
+  # ggplot(filtered_data, aes(x = moved_piece, y = count)) +
+  #   geom_bar(stat = "identity", fill = "steelblue") +
+  #   labs(x = "Piece Taken", y = "Count", title = paste(input$player, input$piece, "captures")) +
+  #   theme_minimal()
+})
+```
+

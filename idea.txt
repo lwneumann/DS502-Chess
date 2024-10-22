@@ -1,0 +1,6 @@
+for w, b
+    piece moved
+    piece taken
+    piece taken by
+    promotes, promote location
+    check
