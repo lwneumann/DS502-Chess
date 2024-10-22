@@ -45,6 +45,7 @@ def run(key_names=None):
 
     print()
     print(message, end=f"({len(key_names)} files):\n")
+    print(f"Saving to {CSV_STORAGE}")
     for k in key_names:
         header = CSV_HEADER_PREFIX + CSV_HEADERS[k]
         write_file(CSV_STORAGE+k+'.csv', header+"\n"+csvify(data[k]))

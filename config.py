@@ -37,14 +37,14 @@ promote_to
 is_check
 
 ----- Analysis -----
-O captures
-O checks
-O check_squares
-X check_origins
-X promotions
-O move_count
-O piece_move_count
-X promotion_squares
+captures
+checks
+check_squares
+check_origins
+promotions
+move_count
+piece_move_count
+promotion_squares
 
 ----- Questions -----
 - Multiple or combine them somehow?

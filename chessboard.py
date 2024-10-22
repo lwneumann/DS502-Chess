@@ -74,56 +74,56 @@ class Game:
             }
             self.move_details.append(move_detail)
             return
+        else:
+            square = move.replace('+', '')
+            square = square.replace('#', '')
+            if "=" in square:
+                square = square[:-2]
+            if len(square) > 2:
+                square = square[-2:]
+            square = chess.parse_square(square)
 
-        square = move.replace('+', '')
-        square = square.replace('#', '')
-        if "=" in square:
-            square = square[:-2]
-        if len(square) > 2:
-            square = square[-2:]
-        square = chess.parse_square(square)
+            # Get piece
+            prior_piece = str(self.board.piece_at(square)).lower()
+            
+            # Move
+            self.board.push_san(move)
 
-        # Get piece
-        prior_piece = str(self.board.piece_at(square)).lower()
-        
-        # Move
-        self.board.push_san(move)
+            # Moved Piece
+            moved_piece = str(self.board.piece_at(square)).lower()
 
-        # Moved Piece
-        moved_piece = str(self.board.piece_at(square)).lower()
+            # Promotion
+            is_promotion = "=" in move
+            promote_to = None
+            if is_promotion:
+                if move[-1] in ("+", "#"):
+                    promote_to = move[-2].lower()
+                else:
+                    promote_to = move[-1].lower()
 
-        # Promotion
-        is_promotion = "=" in move
-        promote_to = None
-        if is_promotion:
-            if move[-1] in ("+", "#"):
-                promote_to = move[-2].lower()
-            else:
-                promote_to = move[-1].lower()
+            # Check
+            is_check = move[-1] == "+"
+            attackers = []
+            if is_check:
+                # Get NON active player
+                is_check = self.get_king(not self.get_player())
 
-        # Check
-        is_check = move[-1] == "+"
-        attackers = []
-        if is_check:
-            # Get NON active player
-            is_check = self.get_king(not self.get_player())
+                # Get attackers
+                attackers = self.get_attackers()
 
-            # Get attackers
-            attackers = self.get_attackers()
-
-        # Store details
-        move_detail = {
-            'move': move,
-            'square': square,
-            'captured': prior_piece,
-            'moved_piece': moved_piece,
-            'is_promotion': is_promotion,
-            'promote_to': promote_to,
-            'is_check': is_check,
-            'attackers': attackers
-        }
-        self.move_details.append(move_detail)
-        return
+            # Store details
+            move_detail = {
+                'move': move,
+                'square': square,
+                'captured': prior_piece,
+                'moved_piece': moved_piece,
+                'is_promotion': is_promotion,
+                'promote_to': promote_to,
+                'is_check': is_check,
+                'attackers': attackers
+            }
+            self.move_details.append(move_detail)
+            return
 
     def check_game(self):
         for turn, m in enumerate(self.moves):

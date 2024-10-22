@@ -12,7 +12,7 @@ def summarize():
     print(f"Processing {len(games)} games:")
     with alive_bar(len(games)) as bar:
         for g in games:
-            r_diff = abs(g[9] - g[11])
+            r_diff = abs(int(g[9]) - int(g[11]))
             b = chessboard.Game(g[12])
 
             summary.append([r_diff, b.check_game()])
@@ -245,7 +245,7 @@ def analize(summary):
                     # Checks
                     # -- Add diff
                     if r_diff not in checks.keys():
-                        checks[r_diff] = deepcopy(templates['captures'])
+                        checks[r_diff] = deepcopy(templates['checks'])
                     # --
                     checks[r_diff][player][moved_piece] += 1
 
@@ -265,14 +265,15 @@ def analize(summary):
                             else:
                                 check_squares[r_diff][player][is_check][moved_piece][square] += 1
 
-                    # TODO |
-                    #      V
-
                     # Check Origin
+                    # -- Add diff
+                    if r_diff not in check_origins.keys():
+                        check_origins[r_diff] = deepcopy(templates['check_origins'])
+                    # --
                     # player, king_place, check_from, square_from, count
                     # -- Add King
-                    if is_check not in check_origins[player].keys():
-                        check_origins[player][is_check] = {}
+                    if is_check not in check_origins[r_diff][player].keys():
+                        check_origins[r_diff][player][is_check] = {}
                     # -- For each Attacker
                     for a in attackers:
                         # -- Get info
@@ -280,24 +281,32 @@ def analize(summary):
                         # -- Fix attacker
                         attacker_piece = PIECES[attacker_piece]
                         # -- Add attacker
-                        if attacker_piece not in check_origins[player][is_check].keys():
-                            check_origins[player][is_check][attacker_piece] = {}
+                        if attacker_piece not in check_origins[r_diff][player][is_check].keys():
+                            check_origins[r_diff][player][is_check][attacker_piece] = {}
                         # -- Add attacker pos
-                        if attacker_square not in check_origins[player][is_check][attacker_piece].keys():
-                            check_origins[player][is_check][attacker_piece][attacker_square] = 0
+                        if attacker_square not in check_origins[r_diff][player][is_check][attacker_piece].keys():
+                            check_origins[r_diff][player][is_check][attacker_piece][attacker_square] = 0
                         # -- Finally Actually count it
-                        check_origins[player][is_check][attacker_piece][attacker_square] += 1
+                        check_origins[r_diff][player][is_check][attacker_piece][attacker_square] += 1
 
                 # Promotions
                 if is_promotion:
-                    promotion[player][promote_to] += 1
-                    if promote_to not in promotion_squares[player].keys():
-                        promotion_squares[player][promote_to] = {square: 1}
+                    # -- Add diff
+                    if r_diff not in promotion.keys():
+                        promotion[r_diff] = deepcopy(templates['promotion'])
+                    # --
+                    promotion[r_diff][player][promote_to] += 1
+                    # -- Add diff
+                    if r_diff not in promotion_squares.keys():
+                        promotion_squares[r_diff] = deepcopy(templates['promotion_squares'])
+                    # --
+                    if promote_to not in promotion_squares[r_diff][player].keys():
+                        promotion_squares[r_diff][player][promote_to] = {square: 1}
                     else:
-                        if square not in promotion_squares[player][promote_to].keys():
-                            promotion_squares[player][promote_to][square] = 1
+                        if square not in promotion_squares[r_diff][player][promote_to].keys():
+                            promotion_squares[r_diff][player][promote_to][square] = 1
                         else:
-                            promotion_squares[player][promote_to][square] += 1
+                            promotion_squares[r_diff][player][promote_to][square] += 1
             bar()
 
     return {
