@@ -94,7 +94,7 @@ bullet point for readability?
 """
 
 CSV_NAME = "games.csv"
-DATA_NAME = "chess_data.py"
+DATA_NAME = "chess_data.txt"
 READABLE_DATA = "data.txt"
 CSV_STORAGE = "./UseableCSV/"
 
@@ -113,13 +113,13 @@ CSV_HEADERS = {
     "captures": "player,piece_moved,piece_taken,count",
     "checks": "player,piece,count",
     "check_squares": "player,square,moved_piece,moved_from,count",
-    "check_origins": "player,king_pos,checker,check_square_count",
+    "check_origins": "player,king_pos,checker,check_square,count",
     "move_count": "player,square,count",
     "piece_move_count": "player,piece,square,count",
     "promotion_squares": "square,count",
     "promotions": "player,promote_to,count"
 }
-CSV_HEADER_PREFIX = "rating_diff,"
+CSV_HEADER_PREFIX = ""
 
 # ---- File Handeling ----
 

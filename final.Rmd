@@ -22,10 +22,6 @@ square_to_pos <- function(square) {
 ## Common Moves
 
 ```{r moves, echo=FALSE}
-#selectInput("player", "Select Player(s):", 
-#              choices = c("white", "black", "both"), 
-#              selected = "both", multiple = TRUE)
-
 moves <- read.csv("UseableCSV/move_count.csv")
 
 moves <- moves %>%
@@ -68,21 +64,21 @@ renderPlot({
 ## Check Moves
 This is whenever there is a check and what piece was moved that made a check.
 
-```{r checks, echo=FALSE}
+```{r checksOrigins, echo=FALSE}
 # Get Data
-checks <- read.csv("UseableCSV/check_squares.csv")
+check_o <- read.csv("UseableCSV/check_origins.csv")
 
 # - Get king square
-checks <- checks %>%
+check_o <- check_o %>%
   rowwise() %>%
-  mutate(pos = list(square_to_pos(square))) %>%
+  mutate(pos = list(square_to_pos(king_pos))) %>%
   unnest_wider(pos, names_sep = "_") %>%
   rename(x = pos_1, y = pos_2)
 
 # - Get check from square
-checks <- checks %>%
+check_o <- check_o %>%
   rowwise() %>%
-  mutate(pos = list(square_to_pos(moved_from))) %>%
+  mutate(pos = list(square_to_pos(check_square))) %>%
   unnest_wider(pos, names_sep = "_") %>%
   rename(check_x = pos_1, check_y = pos_2)
 
@@ -91,7 +87,7 @@ checks <- checks %>%
 inputPanel(
   # Player
   selectInput("check_player", label = "Player:",
-              choices = c("white", "black", "both"), selected = "both"),
+              choices = c("white", "black", "both"), selected = "white"),
   
   # x (row)
   selectInput("x_coord", "Select X (Row):", choices = 1:8),
@@ -101,30 +97,20 @@ inputPanel(
 )
 
 renderPlot({
-  # Get King at x, y
-  filtered_data <- checks %>%
-    filter((input$check_player == "both" | player == input$check_player) & 
+  # Get King at x, y and player
+  filtered_data <- check_o %>%
+    filter((player == input$check_player) & 
              x == input$x_coord &
              y == input$y_coord)
-  
+
   # Color King square
-  '
-  filtered_data <- filtered_data %>%
-    mutate(tile_color = ifelse(x == input$x_coord & y == input$y_coord,
-                               "blue",
-                               "lightgray"))
-  '
+  # ?
   
   ggplot(filtered_data, aes(x = check_x, y = check_y, fill=count)) +
     geom_tile() +
     coord_fixed() +
     labs(title = paste("Check with King at", input$x_coord, ",", input$y_coord)) +
     theme_minimal()
-  
-  # ggplot(filtered_data, aes(x = moved_piece, y = count)) +
-  #   geom_bar(stat = "identity", fill = "steelblue") +
-  #   labs(x = "Piece Taken", y = "Count", title = paste(input$player, input$piece, "captures")) +
-  #   theme_minimal()
 })
 ```
 

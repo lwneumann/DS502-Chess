@@ -1,5 +1,5 @@
+import ast
 from config import *
-from chess_data import data
 
 
 def square_to_move(square):
@@ -37,6 +37,10 @@ def csvify(data, prefix=""):
 
 def run(key_names=None):
     message = "Turning data to csv "
+
+    with open(DATA_NAME, "r") as file:
+        text = file.read()
+    data = ast.literal_eval(text)
 
     if key_names is None:
         key_names = data.keys()
