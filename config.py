@@ -30,11 +30,16 @@ h8 - 63
 
 ------ Summary ------
 move
+square
 captured
 moved_piece
 is_promotion
 promote_to
 is_check
+    (False, king_pos)
+attackers
+castle
+    (False, k, q)
 
 ----- Analysis -----
 captures
@@ -45,52 +50,7 @@ promotions
 move_count
 piece_move_count
 promotion_squares
-
------ Questions -----
-- Multiple or combine them somehow?
-- Best way to do board
-    geom_tile?
-    geom_raster?
-    something something bins?
-- ^ How do best convert, row/col for x/y
-    or just use current # somehow?
-    index at 0 or 1?
-    [row, col] or [col, row]
-    (python is <- for indexing)
-
-
-
-Group via difference in rating not based on actual rating?
-also add some about rating groups too probably? maybe based on 
-
-+-----------------------------+
-|             |       |       |
-|             |       |       |
-|             |       +-------+
-|             |               |
-|             |               |
-|             |               |
-|             +---------------+
-|                             |
-|                             |
-|                             |
-|                             |
-|                             |
-+-----------------------------+
-
-
-game_diff,player,piece,count <---
-    Pre group or let R do the work
-    is it convient to group in R
-    (~20,000 data points)
-
-Stakes of big idea if smalls takes
-/\
-|
-cut for making bins
-
-images in same pdf?
-bullet point for readability?
+castle_counts
 """
 
 CSV_NAME = "games.csv"
@@ -117,7 +77,8 @@ CSV_HEADERS = {
     "move_count": "player,square,count",
     "piece_move_count": "player,piece,square,count",
     "promotion_squares": "square,count",
-    "promotions": "player,promote_to,count"
+    "promotions": "player,promote_to,count",
+    "castle_counts": "player,side,count"
 }
 CSV_HEADER_PREFIX = ""
 

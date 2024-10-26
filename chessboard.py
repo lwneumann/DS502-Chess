@@ -28,26 +28,28 @@ class Game:
         return attacker_list
 
     def analyze_move(self, move, turn):
+        castle = False
+
         if "-O" in move:
             # Move
             self.board.push_san(move)
 
             # Square
-            if turn%2 == 0:
-                # White
-                if move.count('-') == 2:
-                    # Queen Side - C1
+            if move.count('-') == 2:
+                castle = 'q'
+                if turn%2 == 0:
+                    # White Queen Side - C1
                     square = 2
                 else:
-                    # King Side - G1
-                    square = 6
-            else:
-                # Black
-                if move.count('-') == 2:
-                    # Queen Side - C8
+                    # Black Queen Side - C8
                     square = 58
+            else:
+                castle = 'k'
+                if turn%2 == 0:
+                    # White King Side - G1
+                    square = 6
                 else:
-                    # King Side - G8
+                    # Black King Side - G8
                     square = 62
 
             # Check
@@ -70,7 +72,8 @@ class Game:
                 'is_promotion': None,
                 'promote_to': None,
                 'is_check': is_check,
-                'attackers': attackers
+                'attackers': attackers,
+                'castle': castle
             }
             self.move_details.append(move_detail)
             return
@@ -120,7 +123,8 @@ class Game:
                 'is_promotion': is_promotion,
                 'promote_to': promote_to,
                 'is_check': is_check,
-                'attackers': attackers
+                'attackers': attackers,
+                'castle': castle
             }
             self.move_details.append(move_detail)
             return

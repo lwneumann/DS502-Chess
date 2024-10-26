@@ -8,6 +8,7 @@ runtime: shiny
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(colorspace)
 ```
 
 ```{r functions, include=FALSE}
@@ -33,9 +34,38 @@ moves <- moves %>%
 renderPlot({
   ggplot(moves, aes(x = x, y = y, fill=count)) +
     geom_tile() +
-    facet_wrap(~player)
+    scale_x_continuous(breaks = 1:8, labels = c("a", "b", "c", "d", "e", "f", "g", "h")) +
+    scale_y_continuous(breaks = 1:8) +
+    coord_fixed() +
+    scale_fill_gradient(low = "white", high = "red") +
+    facet_wrap(~player) +
+    labs(title = "Command Moves by White and Black", subtitle = "Seperated by players")
 })
 ```
+I realized that this graphic actually is best separated by players. Notice g1 and g8. It appears king side castling is more popular then queen side. Anywho because of this I will be keeping both graphs. This also is not terribly surprising as people love the center four squares, and supporting with kings knight or just another pawn in that f3, f6 space.
+
+
+## Castling
+```{r, echo=FALSE}
+castles <- read.csv("UseableCSV/castle_counts.csv")
+
+castles$side <- factor(castles$side, levels = c("Queen", "King"))
+
+renderPlot({
+  ggplot(castles, aes(x = side, y = count, fill = player)) +
+    geom_bar(stat = "identity", color="black", position = position_dodge(width = 0.7), width = 0.6) +
+    coord_flip() +
+    labs(
+        title = "Counts of King and Queen Sides by Player",
+        x = "Side",
+        y = "Count"
+    ) +
+    scale_fill_manual(values = c("white" = "white", "black" = "black")) +
+    theme_minimal()
+})
+```
+
+
 
 ## Common Captures
 
@@ -60,6 +90,7 @@ renderPlot({
     theme_minimal()
 })
 ```
+
 
 ## Check Moves
 This is whenever there is a check and what piece was moved that made a check.

@@ -181,6 +181,12 @@ def analize(summary):
         "promotion_squares": {
             "white": {},
             "black": {}
+        },
+        "castle": {
+            "white": {"King": 0,
+                      "Queen": 0},
+            "black": {"King": 0,
+                      "Queen": 0}
         }
     }
     
@@ -192,6 +198,7 @@ def analize(summary):
     move_counts = deepcopy(templates['move_counts'])
     piece_move_count = deepcopy(templates['piece_move_count'])
     promotion_squares = deepcopy(templates['promotion_squares'])
+    castle_counts = deepcopy(templates['castle'])
 
     print()
     print('Analizing Data:')
@@ -210,6 +217,7 @@ def analize(summary):
                 promote_to = PIECES[details["promote_to"]]
                 is_check = details["is_check"]
                 attackers = details["attackers"]
+                castle = details["castle"]
 
                 # Moves
                 if square not in move_counts[player].keys():
@@ -275,6 +283,12 @@ def analize(summary):
                             promotion_squares[player][promote_to][square] = 1
                         else:
                             promotion_squares[player][promote_to][square] += 1
+
+                # Castle
+                if castle == 'k':
+                    castle_counts[player]["King"] += 1
+                elif castle == 'q':
+                    castle_counts[player]["Queen"] += 1
             bar()
 
     return {
@@ -285,7 +299,8 @@ def analize(summary):
         "check_origins": check_origins,
         "captures": captures,
         "promotions": promotion,
-        "promotion_squares": promotion_squares
+        "promotion_squares": promotion_squares,
+        "castle_counts": castle_counts
     }
 
 

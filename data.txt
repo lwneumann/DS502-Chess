@@ -22995,5 +22995,15 @@
                 "1": 1
             }
         }
+    },
+    "castle_counts": {
+        "white": {
+            "King": 12182,
+            "Queen": 2022
+        },
+        "black": {
+            "King": 11251,
+            "Queen": 1776
+        }
     }
 }
