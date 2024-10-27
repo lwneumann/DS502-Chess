@@ -18,6 +18,15 @@ square_to_pos <- function(square) {
   y <- (square %/% 8) + 1
   return(c(x, y))
 }
+
+flip_square_pos <- function(square) {
+  # Flip
+  square <- 63 - square
+  # Calculate the x and y positions
+  x <- (square %% 8) + 1
+  y <- (square %/% 8) + 1
+  return(c(x, y))
+}
 ```
 
 ## Common Moves
@@ -25,21 +34,25 @@ square_to_pos <- function(square) {
 ```{r moves, echo=FALSE}
 moves <- read.csv("UseableCSV/move_count.csv")
 
+# Turn square to pos
 moves <- moves %>%
   rowwise() %>%
-  mutate(pos = list(square_to_pos(square))) %>%
+  mutate(pos = if_else(player == "black", list(flip_square_pos(square)), list(square_to_pos(square)))) %>%
   unnest_wider(pos, names_sep = "_") %>%
   rename(x = pos_1, y = pos_2)
 
+moves$player <- factor(moves$player, levels = c("white", "black"))
+
 renderPlot({
   ggplot(moves, aes(x = x, y = y, fill=count)) +
-    geom_tile() +
+    geom_tile(color="black") +
     scale_x_continuous(breaks = 1:8, labels = c("a", "b", "c", "d", "e", "f", "g", "h")) +
     scale_y_continuous(breaks = 1:8) +
     coord_fixed() +
-    scale_fill_gradient(low = "white", high = "red") +
+    scale_fill_gradient(low = "skyblue", high = "red") +
+    theme_void() +
     facet_wrap(~player) +
-    labs(title = "Command Moves by White and Black", subtitle = "Seperated by players")
+    labs(title = "Where to players move", subtitle = "Most common moves, seperated by player", caption = "Both are from the perspective of thier own player")
 })
 ```
 I realized that this graphic actually is best separated by players. Notice g1 and g8. It appears king side castling is more popular then queen side. Anywho because of this I will be keeping both graphs. This also is not terribly surprising as people love the center four squares, and supporting with kings knight or just another pawn in that f3, f6 space.
@@ -60,34 +73,52 @@ renderPlot({
         x = "Side",
         y = "Count"
     ) +
+    theme_bw() +
     scale_fill_manual(values = c("white" = "white", "black" = "black")) +
-    theme_minimal()
+    labs(title = "Who be Castling", subtitle = "Still seperated by players", caption = "Right after I made this my friend who was playing white castled king side. They can't beat statsistics.")
 })
 ```
-
+Well that checks out with what we saw above. King side is much more popular. Additionally it seems that White tends to castle more. Maybe black then plays around white castling and won't do it themselves.
 
 
 ## Common Captures
-
 ```{r captures, echo=FALSE}
 captures <- read.csv("UseableCSV/captures.csv")
 
 inputPanel(
   selectInput("cap_player", label = "Player:",
-              choices = c("white", "black"), selected = "white"),
+              choices = c("white", "black", "Both"), selected = "Both"),
   
   selectInput("piece", label = "Capturing Piece:",
               choices = c('pawn', 'rook', 'bishop', 'knight', 'queen', 'king'), selected = "pawn")
 )
 
 renderPlot({
+  if (input$cap_player == "Both") {
+    sub_caption = "both player's"
+  } else if (input$cap_player == "white") {
+    sub_caption = "White's"
+  } else {
+    sub_caption = "Black's"
+  }
+  
   filtered_data <- captures %>%
-      filter(player == input$cap_player & piece_moved == input$piece)
+    filter(piece_moved == input$piece)
     
-  ggplot(filtered_data, aes(x = piece_taken, y = count)) +
+  cap_max <- filtered_data %>%
+    group_by(piece_taken) %>%
+    summarise(total_count = sum(count)) %>%
+    summarise(max_count = max(total_count)) %>%
+    pull(max_count)
+  
+  filtered_data <- filtered_data %>%
+    filter(input$cap_player == "Both" | player == input$cap_player)
+  
+  ggplot(filtered_data, aes(x = reorder(piece_taken, -count), y = count)) +
     geom_bar(stat = "identity", fill = "steelblue") +
-    labs(x = "Piece Taken", y = "Count", title = paste(input$player, input$piece, "captures")) +
-    theme_minimal()
+    ylim(0, cap_max) +
+    labs(x = "Piece Taken", y = "Count", title = "What piece dies the most (to another piece)?", subtitle = paste("Captures from", sub_caption, input$piece), caption = "Scales are based off the maximum number of a certain piece captures by both players.") +
+    theme(axis.text.x = element_text(size = 14))
 })
 ```
 

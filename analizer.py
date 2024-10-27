@@ -15,7 +15,7 @@ def summarize():
         for g in games:
             r_diff = abs(int(g[9]) - int(g[11]))
             b = chessboard.Game(g[12])
-
+            
             summary.append([r_diff, b.check_game()])
             
             bar()
