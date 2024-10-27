@@ -7,7 +7,7 @@ def main():
     analizer.run()
 
     # Turn into csv files
-    # csv_converter.run()
+    csv_converter.run()
     return
 
 
