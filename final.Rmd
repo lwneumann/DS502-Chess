@@ -11,7 +11,8 @@ library(tidyverse)
 library(colorspace)
 ```
 
-```{r functions, include=FALSE}
+```{r functions}
+# Convert square ID to x, y
 square_to_pos <- function(square) {
   # Calculate the x and y positions
   x <- (square %% 8) + 1
@@ -19,6 +20,7 @@ square_to_pos <- function(square) {
   return(c(x, y))
 }
 
+# Rotate the board for black
 flip_square_pos <- function(square) {
   # Flip
   square <- 63 - square
@@ -31,7 +33,7 @@ flip_square_pos <- function(square) {
 
 ## Common Moves
 
-```{r moves, echo=FALSE}
+```{r moves}
 moves <- read.csv("UseableCSV/move_count.csv")
 
 # Turn square to pos
@@ -50,16 +52,20 @@ renderPlot({
     scale_y_continuous(breaks = 1:8) +
     coord_fixed() +
     scale_fill_gradient(low = "skyblue", high = "red") +
+    # Just to kill labels for now bc w/b need reversed labels and idk how to do that
+    #   |
+    #   V
     theme_void() +
     facet_wrap(~player) +
-    labs(title = "Where to players move", subtitle = "Most common moves, seperated by player", caption = "Both are from the perspective of thier own player")
+    labs(title = "Where to players move", subtitle = "Most common moves, seperated by player", caption = "Both are from the perspective of thier own player") +
+    theme(panel.grid = element_blank())
 })
 ```
 I realized that this graphic actually is best separated by players. Notice g1 and g8. It appears king side castling is more popular then queen side. Anywho because of this I will be keeping both graphs. This also is not terribly surprising as people love the center four squares, and supporting with kings knight or just another pawn in that f3, f6 space.
 
 
 ## Castling
-```{r, echo=FALSE}
+```{r castling}
 castles <- read.csv("UseableCSV/castle_counts.csv")
 
 castles$side <- factor(castles$side, levels = c("Queen", "King"))
@@ -82,7 +88,7 @@ Well that checks out with what we saw above. King side is much more popular. Add
 
 
 ## Common Captures
-```{r captures, echo=FALSE}
+```{r captures}
 captures <- read.csv("UseableCSV/captures.csv")
 
 inputPanel(
@@ -121,12 +127,10 @@ renderPlot({
     theme(axis.text.x = element_text(size = 14))
 })
 ```
+This one is interesting as there is a good amount to dig through. As stated in the caption I made the ymax the largest number of captures for both players that way if you switch between both white and black you are using a common scale. Something that was really stuck out to me was the number of captures the bishop took, as it is the only piece that does not capture mostly pawns. I am unsure if this would be better as a facet as it would quickly become very busy. I also think it would probably be good to consider just dodging white and black like done above in Castling.
 
-
-## Check Moves
-This is whenever there is a check and what piece was moved that made a check.
-
-```{r checksOrigins, echo=FALSE}
+## Check Origins
+```{r checksOrigins}
 # Get Data
 check_o <- read.csv("UseableCSV/check_origins.csv")
 
@@ -135,7 +139,7 @@ check_o <- check_o %>%
   rowwise() %>%
   mutate(pos = list(square_to_pos(king_pos))) %>%
   unnest_wider(pos, names_sep = "_") %>%
-  rename(x = pos_1, y = pos_2)
+  rename(k_x = pos_1, k_y = pos_2)
 
 # - Get check from square
 check_o <- check_o %>%
@@ -152,7 +156,7 @@ inputPanel(
               choices = c("white", "black", "both"), selected = "white"),
   
   # x (row)
-  selectInput("x_coord", "Select X (Row):", choices = 1:8),
+  selectInput("x_coord", "Select X (Row):", choices = setNames(1:8, letters[1:8]), selected = 5),
   
   # y (column)
   selectInput("y_coord", "Select Y (Col):", choices = 1:8)
@@ -162,17 +166,66 @@ renderPlot({
   # Get King at x, y and player
   filtered_data <- check_o %>%
     filter((player == input$check_player) & 
-             x == input$x_coord &
-             y == input$y_coord)
+             k_x == input$x_coord &
+             k_y == input$y_coord)
 
   # Color King square
   # ?
+  # ifelse((x == k_x & y == k_y), "purple", count)
   
-  ggplot(filtered_data, aes(x = check_x, y = check_y, fill=count)) +
-    geom_tile() +
+  ggplot(filtered_data, aes(x = check_x, y = check_y, fill = count)) +
+    geom_tile(color="black") +
     coord_fixed() +
-    labs(title = paste("Check with King at", input$x_coord, ",", input$y_coord)) +
-    theme_minimal()
+    theme_minimal() +
+    scale_x_continuous(breaks = 1:8, labels = c("a", "b", "c", "d", "e", "f", "g", "h")) +
+    scale_y_continuous(breaks = 1:8) +
+    scale_fill_gradient(low = "skyblue", high = "red") +
+    labs(title = paste0("Check to King at ", letters[as.numeric(input$x_coord)], input$y_coord),
+         x = "", y = "") +
+    theme(panel.grid = element_blank())
+})
+```
+This data has been misbehaving but the idea is that you can look at the kings position. I want this to show where checks are coming from but it is currently not doing that and instead is just not showing most of the data anyway as well as only showing moved pieces. This can be seen if you look at white with king at (5, 1), which is currently the default option. The majority of checks are coming from d6, f6, and c7 which are all revealed checks. I wasn't able to figure out how to color it a certain color to stand out.
+
+
+## Rating Outcomes
+
+```{r ratingOutcome}
+outcome_colors <- c("white" = "white", "black" = "black", "draw" = "blue")
+
+games <- read.csv("games.csv")
+
+renderPlot({
+  ggplot(games, aes(white_rating, black_rating, color = winner)) +
+    geom_vline(xintercept = 1500, linetype = "dashed", color = "red") +
+    geom_hline(yintercept = 1500, linetype = "dashed", color = "red") +
+    geom_point(alpha = 0.2, size = 1) +
+    scale_color_manual(values = outcome_colors) +
+    geom_abline() +
+    coord_fixed() +
+    theme_minimal() +
+    theme_void() + 
+    labs(x = "White Rating", y = "Black Rating",
+         title = "Does Rating Matter?", subtitle = "Yes. Yes it does.", caption = "Default rating is 1,500 marked with the red lines. There is a cluster of data along those ratings due to accounts being made with that rating.")
+})
+```
+
+This didn't really surprise me but I am glad I checked this. It shows that in general the rating will result in the expected outcome. There are a good amount of draws which are to be expected when the players are evenly rated, which happens along the line. As an aside here is a breakdown of the outcome of games. Resignation is the most common ending and that draws are the smallest portion of outcomes.
+
+```{r outcome, echo=FALSE}
+games <- read.csv("games.csv")
+
+renderPlot({
+  ggplot(games, aes(x = factor(1), fill = fct_infreq(victory_status))) +
+    geom_bar(position = "fill") +
+    coord_flip() +
+    theme_void() +
+    labs(
+        x = NULL,
+        fill = "Victory Status",
+        title = "How do games end?", subtitle = "In ascending order",
+        caption = "Notably these games come from online so are unable to include the common physical ending of flipping the chessboard."
+    )
 })
 ```
 

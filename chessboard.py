@@ -7,6 +7,9 @@ class Game:
         self.moves = moves
         # To store details of each move
         self.move_details = []
+        # W, B
+        self.castled = [False, False]
+        self.promotes = [0, 0]
         return
 
     def get_king(self, player):
@@ -39,17 +42,21 @@ class Game:
                 castle = 'q'
                 if turn%2 == 0:
                     # White Queen Side - C1
+                    self.castled[0] = True
                     square = 2
                 else:
                     # Black Queen Side - C8
+                    self.castled[1] = True
                     square = 58
             else:
                 castle = 'k'
                 if turn%2 == 0:
                     # White King Side - G1
+                    self.castled[0] = True
                     square = 6
                 else:
                     # Black King Side - G8
+                    self.castled[1] = True
                     square = 62
 
             # Check
@@ -99,6 +106,8 @@ class Game:
             is_promotion = "=" in move
             promote_to = None
             if is_promotion:
+                self.promotes[turn%2] += 1
+
                 if move[-1] in ("+", "#"):
                     promote_to = move[-2].lower()
                 else:

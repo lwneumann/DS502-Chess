@@ -15,8 +15,8 @@ def summarize():
         for g in games:
             r_diff = abs(int(g[9]) - int(g[11]))
             b = chessboard.Game(g[12])
-            
-            summary.append([r_diff, b.check_game()])
+            winner = g[6]
+            summary.append([r_diff, winner, b.castled, b.promotes, b.check_game()])
             
             bar()
     return summary
@@ -199,15 +199,65 @@ def analize(summary):
     piece_move_count = deepcopy(templates['piece_move_count'])
     promotion_squares = deepcopy(templates['promotion_squares'])
     castle_counts = deepcopy(templates['castle'])
+    castle_winners = {
+        "white": {
+            "white": 0,
+            "black": 0,
+            "draw": 0
+        },
+        "black": {
+            "white": 0,
+            "black": 0,
+            "draw": 0
+        }
+    }
+    promotion_wins = {
+        "white": {
+            "white": 0,
+            "black": 0
+        },
+        "black": {
+            "white": 0,
+            "black": 0
+        },
+        "draw": {
+            "white": 0,
+            "black": 0
+        }
+    }
+    openings = {
+        "white": {},
+        "black": {},
+        "draw": {}
+    }
+    promote_opening = {
+        "white": {},
+        "black": {}
+    }
+    winner = {
+        "white": 0,
+        "black": 0,
+        "draw": 0
+    }
 
     print()
     print('Analizing Data:')
     with alive_bar(len(summary)) as bar:
         for s in summary:
-            r_diff, s = s
+            r_diff, outcome, castled, proms, s = s
 
-            for move, details in enumerate(s):
-                player = turn[move%2]
+            # Castling
+            if castled[0]:
+                castle_winners['white'][outcome] += 1
+            if castled[1]:
+                castle_winners['black'][outcome] += 1
+
+            # Promotions
+            promotion_wins[outcome]["white"] += proms[0]
+            promotion_wins[outcome]["black"] += proms[1]
+
+            for move_num, details in enumerate(s):
+                player = turn[move_num%2]
 
                 move = details["move"]
                 square = details['square']
@@ -218,6 +268,23 @@ def analize(summary):
                 is_check = details["is_check"]
                 attackers = details["attackers"]
                 castle = details["castle"]
+
+                # Openings
+                if move_num == 0:
+                    # Opening Moves
+                    if move not in openings[outcome].keys():
+                        openings[outcome][move] = 0
+                    openings[outcome][move] += 1
+
+                    # Promote Openings
+                    if proms[0] > 0:
+                        if move not in promote_opening["white"].keys():
+                            promote_opening["white"][move] = 0
+                        promote_opening["white"][move] += 1
+                elif move_num == 1 and proms[1] > 0:
+                    if move not in promote_opening["black"].keys():
+                        promote_opening["black"][move] = 0
+                    promote_opening["black"][move] += 1
 
                 # Moves
                 if square not in move_counts[player].keys():
@@ -300,8 +367,12 @@ def analize(summary):
         "captures": captures,
         "promotions": promotion,
         "promotion_squares": promotion_squares,
-        "castle_counts": castle_counts
-    }
+        "promotion_wins": promotion_wins,
+        "castle_counts": castle_counts,
+        "castle_winners": castle_winners,
+        "openings": openings,
+        "promote_opening": promote_opening
+        }
 
 
 def save_info(data):
