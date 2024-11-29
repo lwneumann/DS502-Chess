@@ -16,9 +16,10 @@ def summarize():
             w_rat = int(g[9])
             b_rat = int(g[11])
             r_diff = w_rat - b_rat
+            opening = g[14]
             b = chessboard.Game(g[12])
             winner = g[6]
-            summary.append([w_rat, b_rat, r_diff, winner, b.castled, b.promotes, b.check_game()])
+            summary.append([w_rat, b_rat, r_diff, opening, winner, b.castled, b.promotes, b.check_game()])
             
             bar()
     return summary
@@ -248,13 +249,25 @@ def analize(summary):
     print('Analizing Data:')
     with alive_bar(len(summary)) as bar:
         for s in summary:
-            w_rat, b_rat, r_diff, outcome, castled, proms, s = s
+            w_rat, b_rat, r_diff, opening, outcome, castled, proms, s = s
 
             # Average Winrates
+            opening_play = opening.split(': ')
+            varient = None
+            if len(opening_play) == 2:
+                opening_play, varient = opening_play
+            else:
+                opening_play = opening_play[0]
             avg_rat = round((w_rat+b_rat)/2)
             if avg_rat not in avg_winrate:
-                avg_winrate[avg_rat] = deepcopy(winner)
-            avg_winrate[avg_rat][outcome] += 1
+                avg_winrate[avg_rat] = {opening_play:
+                                        {varient: deepcopy(winner)}
+                                        }
+            if opening_play not in avg_winrate[avg_rat]:
+                avg_winrate[avg_rat][opening_play] = {varient: deepcopy(winner)}
+            if varient not in avg_winrate[avg_rat][opening_play]:
+                avg_winrate[avg_rat][opening_play][varient] = deepcopy(winner)
+            avg_winrate[avg_rat][opening_play][varient][outcome] += 1
 
             # Winrate
             if r_diff not in diff_winrate:

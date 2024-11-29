@@ -84,7 +84,7 @@ CSV_HEADERS = {
     "castle_winners": "castling_player,outcome,count",
     "openings": "outcome,first_move,count",
     "rating_wins": "rate_diff,winner,count",
-    "average_wins": "rating_average,winner,count"
+    "average_wins": "rating_average,opening,varient,winner,count"
 }
 CSV_HEADER_PREFIX = ""
 
