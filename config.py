@@ -76,13 +76,15 @@ CSV_HEADERS = {
     "check_origins": "player,king_pos,checker,check_square,count",
     "move_count": "player,square,count",
     "piece_move_count": "player,piece,square,count",
-    "promotion_squares": "square,count",
+    "promotion_squares": "player,piece,square,count",
     "promotions": "player,promote_to,count",
     "promotion_wins": "outcome,promotes,count",
     "promote_opening": "player,first_move,count",
     "castle_counts": "player,side,count",
     "castle_winners": "castling_player,outcome,count",
-    "openings": "outcome,first_move,count"
+    "openings": "outcome,first_move,count",
+    "rating_wins": "rate_diff,winner,count",
+    "average_wins": "rating_average,winner,count"
 }
 CSV_HEADER_PREFIX = ""
 

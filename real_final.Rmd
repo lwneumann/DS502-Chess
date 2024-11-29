@@ -1,0 +1,107 @@
+---
+title: "Is There a Better Color in Chess?"
+output: html_document
+author: "Levin Neumann"
+runtime: shiny
+date: "2024-11-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+
+## Isn't it just who wins more?
+
+Can't we just see who wins the most games and play that color? Well...
+
+```{r echo=FALSE}
+games <- read.csv("games.csv")
+
+# Summarize outcomes to make out favorite graphic!!
+winner_summary <- games %>%
+  group_by(winner) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+# Plot a lovely pie chart yay
+ggplot(winner_summary, aes(x = 2, y = percentage, fill = winner)) +
+  geom_col(width = 1, color = "black") +
+  coord_polar(theta = "y") +
+  xlim(1, 2.5) +
+  labs(title = "Who Wins Chess?",
+       caption = "Across rated and unrated games.",
+       fill = "Outcome") +
+  theme_void() +
+  scale_fill_manual(values = c("white" = "white",
+                               "draw" = "grey",
+                               "black" = "black"),
+                    labels = c("Black (45.4%)",
+                               "Draw (4.74%)",
+                               "White (49.86%)")) +
+  theme(legend.position = "right")
+```
+
+By that logic we should just play White, and that's the end of the story. However this is not quite the end of the story.
+
+## What about rating
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Get data and add bins so it's pretty
+ratings <- read.csv("UseableCSV/rating_wins.csv")
+
+ratings$bins <- cut(ratings$rate_diff,
+                   breaks = seq(min(ratings$rate_diff),
+                                max(ratings$rate_diff), by = 50))
+
+# Calculate total count for each rating difference
+ratings_summary <- ratings %>%
+  group_by(rate_diff) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup()
+
+# Calculate proportions for each winner
+ratings_proportions <- ratings_summary %>%
+  mutate(proportion = count / total_count)
+
+# Plot with smoothing because it is not pretty otherwise
+ggplot(ratings_proportions, aes(x = rate_diff, y = proportion,
+                                color = winner)) +
+  geom_vline(xintercept = 0, color = "black", linewidth = 1) +
+  geom_smooth(method = "loess", se = FALSE, span = 0.3, linewidth = 1.2) +
+  labs(
+    title = "I'm Better Than My Opponent",
+    x = "Rating Difference (White Rating - Black Rating)",
+    y = "Outcome Proportion",
+    color = "Winner"
+  ) +
+  scale_color_manual(
+    values = c("black", "blue", "grey"),
+    labels = c("Black", "Draw", "White")) +
+  theme_bw()
+```
+
+Naturally when you have a higher rating you will tend to win more. However notice that there are still more draws than black winning when White is rated much higher whereas when Black is rated much higher this isn't the case.
+
+This is because as a more skillful player you can best abuse the advantage of going first and beat out your opponent. If you are playing against a better White player your best approach is to draw.
+
+Conversely, when you are ranked much lower than a Black player, going first provided enough control over the game you are able beat better opponents.
+
+## If Rating Matters is White Still the Best?
+
+```{r, message=FALSE, echo=FALSE, warning=FALSE}
+# Let the user input a rating to check
+inputPanel(
+    sliderInput("w_rat", "White Rating", min = 0, max = 200, step = 10, value = 100)
+  )
+
+renderPlot({
+  ggplot() +
+      geom_text(aes(x = 1, y = 1, label = paste("Rating:", input$w_rat)), size = 6)
+})
+```
+
+
+

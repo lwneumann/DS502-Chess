@@ -1,0 +1,130 @@
+---
+title: "final_graphics"
+output: html_document
+date: "2024-11-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+ratings <- read.csv("UseableCSV/rating_wins.csv")
+
+ratings$bins <- cut(ratings$rate_diff,
+                   breaks = seq(min(ratings$rate_diff), max(ratings$rate_diff), by = 50))
+```
+
+```{r}
+# Calculate total count for each rating difference
+ratings_summary <- ratings %>%
+  group_by(rate_diff) %>%
+  mutate(total_count = sum(count)) %>%
+  ungroup()
+
+# Calculate proportions for each winner
+ratings_proportions <- ratings_summary %>%
+  mutate(proportion = count / total_count)
+
+# Plot with LOESS smoothing
+ggplot(ratings_proportions, aes(x = rate_diff, y = proportion, color = winner)) +
+  geom_smooth(method = "loess", se = FALSE, span = 0.3, size = 1) +
+  labs(
+    title = "Win Rates Across Rating Differences (Smoothed)",
+    x = "Rating Difference",
+    y = "Proportion",
+    color = "Winner"
+  ) +
+  scale_color_manual(
+    values = c("black", "grey29", "grey")) +
+  theme_minimal()
+```
+
+```{r}
+avg_ratings <- read.csv("UseableCSV/average_wins.csv")
+
+avg_ratings$bins <- cut(avg_ratings$rating_average,
+                        breaks = seq(min(avg_ratings$rating_average), max(avg_ratings$rating_average), by = 50),
+                        include.lowest = TRUE)
+
+ggplot(avg_ratings, aes(x = bins, fill = winner)) +
+  geom_bar(aes(weight = count), position = "fill", color='black', width=0.8) +
+  labs(x = "Rating Average Bins", y = "Proportion", fill = "Winner") +
+  scale_fill_manual(
+    values = c("black", "grey", "white")) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 50, hjust = 1)
+  )
+```
+
+```{r}
+# Create custom bin labels
+bin_labels <- paste(
+  head(seq(min(avg_ratings$rating_average), max(avg_ratings$rating_average), by = 50), -1), 
+  "-", 
+  tail(seq(min(avg_ratings$rating_average), max(avg_ratings$rating_average), by = 50), -1)
+)
+
+# Apply cut with custom labels
+avg_ratings$bins <- cut(
+  avg_ratings$rating_average,
+  breaks = seq(min(avg_ratings$rating_average), max(avg_ratings$rating_average), by = 50),
+  include.lowest = TRUE,
+  labels = bin_labels
+)
+
+# Plot with stacked bars showing the distribution of winner by bins
+ggplot(avg_ratings, aes(x = bins, fill = winner)) +
+  geom_bar(aes(weight = count), position = "fill", color = 'black', width = 0.8) +
+  labs(x = "Rating Average Bins", y = "Proportion", fill = "Winner") +
+  scale_fill_manual(values = c("black", "grey", "white")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 50, hjust = 1)) # Rotate x-axis labels if necessary
+```
+
+```{r}
+# Filter out rows where 'bins' or 'winner' is NA
+avg_ratings_clean <- avg_ratings[!is.na(avg_ratings$bins) & !is.na(avg_ratings$winner), ]
+
+# Plot with stacked bars showing the distribution of winner by bins
+ggplot(avg_ratings_clean, aes(x = bins, fill = winner)) +
+  geom_bar(aes(weight = count), position = "fill", color = 'black', width = 0.8) +
+  labs(x = "Average Rating", y = "Proportion", fill = "Winner") +
+  scale_fill_manual(values = c("black", "grey", "white")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 55, hjust = 1)) # Rotate x-axis labels if necessary
+```
+
+```{r}
+counts_summary <- avg_ratings_clean %>%
+  group_by(bins, winner) %>%
+  summarise(count = sum(count), .groups = "drop")
+
+print(counts_summary)
+counts_summary <- avg_ratings_clean %>%
+  group_by(bins, winner) %>%
+  summarise(count = sum(count), .groups = "drop")
+
+print(counts_summary)
+```
+
+```{r}
+# Filter out the bin 816-866
+avg_ratings_clean_trimmed <- avg_ratings_clean %>%
+  filter(bins != "816-866")
+
+# Plot with stacked bars showing the distribution of winner by bins (excluding the 816-866 bin)
+ggplot(avg_ratings_clean_trimmed, aes(x = bins, fill = winner)) +
+  geom_bar(aes(weight = count), position = "fill", color = 'black', width = 0.8) +
+  labs(x = "Rating Average Bins", y = "Proportion", fill = "Winner") +
+  scale_fill_manual(values = c("black", "grey", "white")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 55, hjust = 1)) # Rotate x-axis labels if necessary
+```
+

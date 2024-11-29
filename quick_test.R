@@ -69,5 +69,12 @@ p <- ggplot(checks, aes(piece, count)) +
     theme_minimal()
 '
 
+# Plot rating diffs --------------------------------------
+rates <- read.csv("UseableCSV/rating_wins.csv") %>%
+          filter(winner == "white")
+
+p <- ggplot(rates, aes(rate_diff, count)) +
+        geom_line() +
+        theme_bw()
 
 plot(p)

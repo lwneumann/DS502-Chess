@@ -13,10 +13,12 @@ def summarize():
     print(f"Processing {len(games)} games:")
     with alive_bar(len(games)) as bar:
         for g in games:
-            r_diff = abs(int(g[9]) - int(g[11]))
+            w_rat = int(g[9])
+            b_rat = int(g[11])
+            r_diff = w_rat - b_rat
             b = chessboard.Game(g[12])
             winner = g[6]
-            summary.append([r_diff, winner, b.castled, b.promotes, b.check_game()])
+            summary.append([w_rat, b_rat, r_diff, winner, b.castled, b.promotes, b.check_game()])
             
             bar()
     return summary
@@ -239,12 +241,25 @@ def analize(summary):
         "black": 0,
         "draw": 0
     }
+    diff_winrate = {}
+    avg_winrate = {}
 
     print()
     print('Analizing Data:')
     with alive_bar(len(summary)) as bar:
         for s in summary:
-            r_diff, outcome, castled, proms, s = s
+            w_rat, b_rat, r_diff, outcome, castled, proms, s = s
+
+            # Average Winrates
+            avg_rat = round((w_rat+b_rat)/2)
+            if avg_rat not in avg_winrate:
+                avg_winrate[avg_rat] = deepcopy(winner)
+            avg_winrate[avg_rat][outcome] += 1
+
+            # Winrate
+            if r_diff not in diff_winrate:
+                diff_winrate[r_diff] = deepcopy(winner)
+            diff_winrate[r_diff][outcome] += 1
 
             # Castling
             if castled[0]:
@@ -371,7 +386,9 @@ def analize(summary):
         "castle_counts": castle_counts,
         "castle_winners": castle_winners,
         "openings": openings,
-        "promote_opening": promote_opening
+        "promote_opening": promote_opening,
+        "rating_wins": diff_winrate,
+        "average_wins": avg_winrate
         }
 
 
